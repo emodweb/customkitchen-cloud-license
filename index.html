@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CustomKitchen Studio — Cloud License Server & Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --surface: #111827;
+            --surface-hover: #1f2937;
+            --border: #374151;
+            --accent: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.2);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+            --green: #10b981;
+            --green-bg: rgba(16, 185, 129, 0.1);
+            --red: #ef4444;
+            --red-bg: rgba(239, 68, 68, 0.1);
+            --amber: #f59e0b;
+            --amber-bg: rgba(245, 158, 11, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+
+        header {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 18px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-box { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #ea580c); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+        .logo-text { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+        .badge-cloud { background: var(--surface-hover); color: var(--accent); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 12px; border: 1px solid var(--accent); margin-left: 6px; }
+
+        .container { max-width: 1280px; width: 100%; margin: 0 auto; padding: 32px 24px; flex: 1; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 30px; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-val { font-size: 28px; font-weight: 800; margin-top: 6px; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+        .section-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+
+        .btn { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 12px var(--accent-glow); }
+        .btn-primary:hover { background: #ea580c; }
+        .btn-secondary { background: var(--surface-hover); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: #374151; }
+
+        .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        table { width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left; }
+        th { background: rgba(0,0,0,0.25); padding: 14px 16px; font-weight: 600; font-size: 12px; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); letter-spacing: 0.5px; }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .tag-active { background: var(--green-bg); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .tag-expiring { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .tag-expired { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .key-code { font-family: monospace; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 6px; font-size: 12.5px; color: #fb923c; }
+        .copy-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 2px 4px; font-size: 12px; }
+        .copy-btn:hover { color: #fff; }
+
+        .hwid-pill { font-family: monospace; font-size: 12px; color: #94a3b8; }
+
+        /* Modal Generare Licență */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; width: 500px; max-width: 90vw; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; background: #0b0f19; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 13.5px; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+        .banner-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        footer { text-align: center; padding: 20px; color: var(--text-muted); font-size: 12px; border-top: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-box">
+            <div class="logo-icon">CK</div>
+            <div>
+                <div class="logo-text">CustomKitchen Studio <span class="badge-cloud">License Cloud</span></div>
+            </div>
+        </div>
+        <div>
+            <a href="licenses.json" target="_blank" class="btn btn-secondary">🔗 Raw API (JSON)</a>
+            <button class="btn btn-primary" onclick="openNewLicenseModal()">+ Generează Licență Nouă</button>
+        </div>
+    </header>
+
+    <div class="container">
+        
+        <div class="banner-warning" id="exp-banner" style="display:none;">
+            <span style="font-size:22px;">⏳</span>
+            <div>
+                <b id="exp-banner-title">Atenție! Licență în curs de expirare:</b>
+                <div id="exp-banner-msg" style="color:var(--text-muted); margin-top:2px;"></div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Licențe Emise</div>
+                <div class="stat-val" id="stat-total">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Licențe Active</div>
+                <div class="stat-val" style="color:var(--green);" id="stat-active">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">În curs de expirare (&lt;24h)</div>
+                <div class="stat-val" style="color:var(--amber);" id="stat-warning">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Licențe Expirate</div>
+                <div class="stat-val" style="color:var(--red);" id="stat-expired">0</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">
+                <span>📋 Listă Licențe Active &amp; Utilizatori</span>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted);">
+                Sincronizat live din <code style="color:var(--accent);">licenses.json</code>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Utilizator &amp; Email</th>
+                        <th>Cheie Licență</th>
+                        <th>Hardware ID (HWID)</th>
+                        <th>Pachet</th>
+                        <th>Status</th>
+                        <th>Expiră la</th>
+                        <th>Timp Rămas</th>
+                        <th>Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody id="license-table-body">
+                    <tr><td colspan="8" style="text-align:center; padding:30px; color:var(--text-muted);">Se încarcă datele...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+    <!-- Modal Adăugare Licență -->
+    <div class="modal" id="lic-modal">
+        <div class="modal-card">
+            <div class="modal-title">
+                <span>Emitere Licență Client Nou</span>
+                <button onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Email Client:</label>
+                <input type="email" id="in-email" placeholder="client@atelier.ro" required>
+            </div>
+            <div class="form-group">
+                <label>Nume Client / Atelier:</label>
+                <input type="text" id="in-name" placeholder="Ex: Mobilier Design SRL">
+            </div>
+            <div class="form-group">
+                <label>Hardware ID (din SketchUp-ul clientului):</label>
+                <input type="text" id="in-hwid" placeholder="CK-XXXX-XXXX-XXXX" required>
+            </div>
+            <div class="form-group">
+                <label>Pachet / Nivel:</label>
+                <select id="in-tier">
+                    <option value="Commercial PRO">Commercial PRO (Complet: OCL, AI, Deviz, Export)</option>
+                    <option value="Commercial Standard">Commercial Standard (Fără AI)</option>
+                    <option value="Trial 14 Zile">Trial 14 Zile</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Valabilitate până la:</label>
+                <input type="datetime-local" id="in-expires" required>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Anulează</button>
+                <button class="btn btn-primary" onclick="generateNewLicense()">Generează Cheie Licență</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 CustomKitchen Studio. Cloud Licensing Server &amp; Client Management Portal.
+    </footer>
+
+    <script>
+        let licenseDatabase = { licenses: [] };
+
+        async function loadLicenses() {
+            try {
+                const res = await fetch('licenses.json?t=' + Date.now());
+                licenseDatabase = await res.json();
+                renderDashboard();
+            } catch(e) {
+                console.error("Eroare la incarcarea licentelor:", e);
+                document.getElementById('license-table-body').innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);">Eroare la citirea licenses.json</td></tr>`;
+            }
+        }
+
+        function renderDashboard() {
+            const list = licenseDatabase.licenses || [];
+            document.getElementById('stat-total').innerText = list.length;
+
+            let activeCount = 0;
+            let warningCount = 0;
+            let expiredCount = 0;
+
+            const now = new Date();
+            let tbody = '';
+
+            list.forEach((lic, idx) => {
+                const expDate = new Date(lic.expires_at);
+                const diffMs = expDate - now;
+                const diffHours = diffMs / (1000 * 60 * 60);
+
+                let statusTag = '';
+                let remainingText = '';
+
+                if (diffMs <= 0) {
+                    expiredCount++;
+                    statusTag = `<span class="tag tag-expired">● Expirată</span>`;
+                    remainingText = `<span style="color:var(--red); font-weight:600;">Expirat de ${Math.abs(Math.round(diffHours))} ore</span>`;
+                } else if (diffHours <= 24) {
+                    warningCount++;
+                    statusTag = `<span class="tag tag-expiring">⚠️ Expiră curând</span>`;
+                    const hrs = Math.floor(diffHours);
+                    const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                    remainingText = `<span style="color:var(--amber); font-weight:700;">${hrs} ore ${mins} min</span>`;
+
+                    // Notificare Banner specială pentru userul de test
+                    if (diffHours <= (lic.warning_hours_before || 3)) {
+                        const banner = document.getElementById('exp-banner');
+                        banner.style.display = 'flex';
+                        document.getElementById('exp-banner-msg').innerHTML = `Licența utilizatorului <b>${lic.email}</b> (${lic.user_name}) va expira în <b>${hrs} ore și ${mins} minute</b> (la data de ${expDate.toLocaleDateString('ro-RO')} ${expDate.toLocaleTimeString('ro-RO')}). Notificarea de 3 ore este activată!`;
+                    }
+                } else {
+                    activeCount++;
+                    statusTag = `<span class="tag tag-active">● Activă</span>`;
+                    const days = Math.floor(diffHours / 24);
+                    remainingText = `<span style="color:var(--green); font-weight:600;">${days} zile rămase</span>`;
+                }
+
+                tbody += `
+                    <tr>
+                        <td>
+                            <b>${lic.user_name || 'Client'}</b>
+                            <div style="font-size:12px; color:var(--text-muted);">${lic.email}</div>
+                        </td>
+                        <td>
+                            <span class="key-code">${lic.license_key}</span>
+                            <button class="copy-btn" title="Copiază cheia" onclick="navigator.clipboard.writeText('${lic.license_key}')">📋</button>
+                        </td>
+                        <td><span class="hwid-pill">${lic.hardware_id || 'Oricare'}</span></td>
+                        <td><b>${lic.tier}</b></td>
+                        <td>${statusTag}</td>
+                        <td>${expDate.toLocaleDateString('ro-RO')} ${expDate.toLocaleTimeString('ro-RO')}</td>
+                        <td>${remainingText}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="extendLicensePrompt(${idx})">➕ Prelungește</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('stat-active').innerText = activeCount;
+            document.getElementById('stat-warning').innerText = warningCount;
+            document.getElementById('stat-expired').innerText = expiredCount;
+            document.getElementById('license-table-body').innerHTML = tbody || `<tr><td colspan="8" style="text-align:center;">Nu există licențe înregistrate.</td></tr>`;
+        }
+
+        function openNewLicenseModal() {
+            document.getElementById('lic-modal').classList.add('active');
+            // Default expirare peste 1 an
+            const d = new Date();
+            d.setFullYear(d.getFullYear() + 1);
+            document.getElementById('in-expires').value = d.toISOString().slice(0, 16);
+        }
+
+        function closeModal() {
+            document.getElementById('lic-modal').classList.remove('active');
+        }
+
+        function generateNewLicense() {
+            const email = document.getElementById('in-email').value;
+            const name = document.getElementById('in-name').value;
+            const hwid = document.getElementById('in-hwid').value;
+            const tier = document.getElementById('in-tier').value;
+            const exp = document.getElementById('in-expires').value;
+
+            if (!email || !hwid || !exp) {
+                alert("Completați Email, Hardware ID și Data Expirării!");
+                return;
+            }
+
+            const randPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const newKey = `CKS-${randPart}-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+            const newLic = {
+                license_key: newKey,
+                email: email,
+                user_name: name || email,
+                tier: tier,
+                status: "active",
+                hardware_id: hwid.toUpperCase(),
+                created_at: new Date().toISOString(),
+                expires_at: new Date(exp).toISOString(),
+                warning_hours_before: 3,
+                features: {
+                    cut_and_quote: true,
+                    export_excel: true,
+                    export_pdf: true,
+                    ai_assistant: (tier.includes('PRO')),
+                    technical_drawings: true,
+                    cloud_libraries: true
+                }
+            };
+
+            licenseDatabase.licenses.unshift(newLic);
+            closeModal();
+            renderDashboard();
+
+            prompt("Licență generată cu succes! Copiază intrarea JSON pentru a o adăuga în GitHub repo:", JSON.stringify(licenseDatabase, null, 2));
+        }
+
+        function extendLicensePrompt(idx) {
+            const lic = licenseDatabase.licenses[idx];
+            const days = prompt(`Cu câte zile doriți să prelungiți licența pentru ${lic.email}?`, "30");
+            if (days && !isNaN(parseInt(days))) {
+                const cur = new Date(lic.expires_at > new Date().toISOString() ? lic.expires_at : new Date());
+                cur.setDate(cur.getDate() + parseInt(days));
+                lic.expires_at = cur.toISOString();
+                renderDashboard();
+                alert(`Licența a fost prelungită până la: ${cur.toLocaleDateString('ro-RO')} ${cur.toLocaleTimeString('ro-RO')}`);
+            }
+        }
+
+        window.onload = loadLicenses;
+    </script>
+</body>
+</html>
